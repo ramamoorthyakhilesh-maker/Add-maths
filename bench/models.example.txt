@@ -1,0 +1,7 @@
+# One OpenRouter model id per line. Edit this file, then run:  python bench/bench.py list-free   to see what exists today.
+nvidia/nemotron-3-ultra-550b-a55b:free
+nvidia/nemotron-3-super-120b-a12b:free
+google/gemma-4-26b-a4b-it:free
+thinkingmachines/inkling-small:free
+nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+inclusionai/ling-3.0-flash-fin:free

@@ -1,0 +1,17 @@
+# private or generated, never commit
+logs/
+plots/
+memory/
+USER.md
+MEMORY.md
+IDENTITY.md
+.env
+*.env
+openclaw.json
+bench/results.jsonl
+bench/models.txt
+__pycache__/
+*.pyc
+.pytest_cache/
+*.bak
+*.bak2
