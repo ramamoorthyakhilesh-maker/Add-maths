@@ -45,10 +45,14 @@ def test_no_secrets(label, pattern):
     assert not hits, f"{label} found in {hits}"
 
 
+GITHUB_URL = re.compile(r"github\.com/[A-Za-z0-9._-]+/[A-Za-z0-9._-]+")
+
+
 def test_no_personal_names():
+    """The owner's GitHub username is part of the public repo address, so GitHub URLs are allowed. Names anywhere else are not."""
     hits = []
     for p in text_files():
-        low = read(p).lower()
+        low = GITHUB_URL.sub("github.com/owner/repo", read(p)).lower()
         for w in PRIVATE_WORDS:
             if w in low:
                 hits.append((os.path.relpath(p, ROOT), w))
