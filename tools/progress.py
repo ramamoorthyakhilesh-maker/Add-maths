@@ -5,6 +5,7 @@ Usage:
   python progress.py stats <topic>     one topic, split by level
   python progress.py next              suggest the next topic and level to practise
   python progress.py history [n]       the last n questions (default 10)
+  python progress.py mistakes          the slips that keep coming up (from the DIAGNOSIS lines of the last 60 days)
 
 Scoring, one score per question (hints are allowed, but they cost marks):
   1.0  solved on the first check with no hint
@@ -167,6 +168,31 @@ def cmd_history(qs, now, n):
         print(f"{q['last'].strftime('%Y-%m-%d %H:%M')}  {q['id']}  {status(q, now)}"
               + (f"  ({q['wrong']} wrong, {plural(q['hints'], 'hint')})" if q["wrong"] or q["hints"] else ""))
 
+def cmd_mistakes(now, days=60):
+    cut = now - datetime.timedelta(days=days); by = collections.defaultdict(collections.Counter)
+    try:
+        with open(LOG, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    d = json.loads(line); ts = datetime.datetime.fromisoformat(d["ts"])
+                except Exception:
+                    continue
+                if ts < cut or not d.get("diag") or len(d.get("args", [])) < 2: continue
+                pid = parse_id(d["args"][1])
+                by[d["diag"]][pid[0] if pid else "?"] += 1
+    except OSError:
+        pass
+    if not by: print("No slips logged yet."); return
+    try:
+        sys.path.insert(0, HERE); from slips import ADV
+    except Exception:
+        ADV = {}
+    ranked = sorted(by.items(), key=lambda kv: -sum(kv[1].values()))[:5]
+    for code, c in ranked:
+        n = sum(c.values()); where = ", ".join(f"{t} {k}" for t, k in c.most_common(3))
+        first = ADV.get(code, "").split(". ")[0].rstrip(".")
+        print(f"{code}: {plural(n, 'time')} ({where})" + (f". {first}." if first else "") + ("  RECURRING" if n >= 3 else ""))
+
 def main(a):
     if not a or a[0] in ("-h", "--help"): print(__doc__); return
     if not os.path.exists(LOG): print(f"No log yet at {LOG}. Answer a question through Edith first."); return
@@ -176,6 +202,7 @@ def main(a):
     if c == "stats": cmd_stats(qs, topics, now, a[1] if len(a) > 1 else None)
     elif c == "next": cmd_next(qs, topics, now)
     elif c == "history": cmd_history(qs, now, int(a[1]) if len(a) > 1 else 10)
+    elif c == "mistakes": cmd_mistakes(now)
     else: print(__doc__)
 
 if __name__ == "__main__":

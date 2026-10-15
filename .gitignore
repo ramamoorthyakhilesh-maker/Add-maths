@@ -8,8 +8,11 @@ IDENTITY.md
 .env
 *.env
 openclaw.json
-bench/results.jsonl
+bench/results*.jsonl
+bench/leak*.jsonl
 bench/models.txt
+bench/models_*.txt
+bench/REPORT_*.md
 __pycache__/
 *.pyc
 .pytest_cache/

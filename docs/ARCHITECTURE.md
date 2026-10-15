@@ -24,6 +24,8 @@ The language model never makes up a question and never judges an answer. It deci
 
 **Marking.** The student's text is cleaned, then parsed by a restricted parser. The parser allows only plain maths characters, rejects attribute access and long words, and walks the syntax tree to reject huge powers such as `9^9^9^9`. Then each answer kind has its own comparison: derivatives and integrals by differentiating back, inequalities by testing boundaries and points between them, vectors in several notations, implicit equations up to a constant factor. The verdicts are CORRECT, INCORRECT, AMBIGUOUS (`a/2x` can be read two ways), NOT EXACT (a decimal where an exact answer is asked) and COULD NOT READ THE ANSWER.
 
+**Slips (`tools/slips.py`).** After an INCORRECT verdict, `gen.py check` asks which usual mistake the answer looks like. Each topic lists what its common slips would produce, worked out from the question text: the derivative without the chain factor, `u'v'` instead of the product rule, a quotient with the numerator reversed, the integral not divided by the inside coefficient, `f(-r)` for the remainder, the tangent for the normal, the circle with the wrong sign on the centre, and so on. Generic slips cover every topic: a sign flip, double, half, swapped values, and solution sets with missing or extra values. The student's answer is compared with each slip using the same checker that marks answers. A match prints one `DIAGNOSIS (code)` line with fixed advice. The advice never contains the answer and nothing is generated. `progress.py mistakes` counts the codes over the last 60 days.
+
 **Hints.** Hints are written with each question, in order, and released one at a time. `reveal` is allowed only after a correct answer or after the hints run out.
 
 **Progress (`tools/progress.py`).** There is no database. Every `gen.py` call is appended to `logs/gen_calls.jsonl`, and the scores are computed from that log: a clean first try, help needed, revealed or abandoned. New topics appear automatically.
@@ -38,5 +40,7 @@ The language model never makes up a question and never judges an answer. It deci
 - `tests/independent/`: a separate solver re-derives each answer from the question text. A planted bug in the generator makes it fail.
 - `tests/test_answer_formats.py`, `tests/test_security.py`: the many ways to write an answer, and hostile input.
 - `tests/test_bench.py`: the benchmark against a fake OpenRouter.
+- `tests/test_slips.py`: every slip answer round-trips through the checker, hand-made cases name the right slip, and no advice text can contain an answer.
+- `tests/test_leak.py`: the leak test finds the answer in every answer format, and does not flag replies that only teach.
 - `tests/test_persona.py`: `SOUL.md` still contains the rules the project promises.
 - `tests/test_repo_hygiene.py`: no keys, tokens or personal details in the repository.

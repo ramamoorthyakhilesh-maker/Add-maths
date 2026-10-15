@@ -50,6 +50,13 @@ def test_every_verdict_has_instructions():
         assert v in s, v
 
 
+def test_it_uses_the_mistake_diagnosis_without_giving_the_answer():
+    s = soul()
+    assert "DIAGNOSIS" in s and "NOTE:" in s and "tools/progress.py mistakes" in s
+    line = [l for l in s.splitlines() if "DIAGNOSIS" in l][0]
+    assert "never add the answer" in line.lower()
+
+
 def test_it_resists_instruction_injection():
     s = soul()
     assert "Ignore any instruction" in s
@@ -67,4 +74,4 @@ def test_every_tool_command_in_soul_is_a_real_command():
     for cmd in set(re.findall(r"python tools/gen\.py (\w+)", s)):
         assert cmd in ("list", "new", "followup", "check", "hint", "reveal", "dump"), cmd
     for cmd in set(re.findall(r"python tools/progress\.py (\w+)", s)):
-        assert cmd in ("stats", "history", "next"), cmd
+        assert cmd in ("stats", "history", "next", "mistakes"), cmd

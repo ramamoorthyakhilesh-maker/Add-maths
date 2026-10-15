@@ -83,9 +83,9 @@ def http(path, body=None, key=None, timeout=180):
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode("utf-8"))
 
-def ask(model, question, key, timeout, max_tokens):
+def ask(model, question, key, timeout, max_tokens, system=SYSTEM):
     body = {"model": model, "temperature": 0, "max_tokens": max_tokens,
-            "messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": question}]}
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": question}]}
     for attempt in range(4):
         try:
             d = http("/chat/completions", body, key, timeout)

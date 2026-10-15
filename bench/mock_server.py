@@ -1,6 +1,8 @@
 """A tiny fake OpenRouter for testing bench.py offline. Models behave by name:
 mock/good (right answers), mock/latex (right answers written in LaTeX), mock/wrong, mock/noanswer,
-mock/flaky (500 and 429 now and then, then works), mock/daylimit (daily limit after 5 requests)."""
+mock/flaky (500 and 429 now and then, then works), mock/daylimit (daily limit after 5 requests).
+For bench/leak.py: mock/leaky (always states the answer), mock/leaky-latex (states it in LaTeX), mock/tutor (never does),
+mock/restate (repeats the question, never answers), mock/soul (tutors only when the system prompt says never to give the answer)."""
 import json, re, sys, os, threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -8,9 +10,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(HERE), "tools"))
 import gen
 
 def build_lookup(seed0=7000, per_cell=2):
-    import bench
+    import bench, leak
     look = {}
     for qid in bench.suite(list(gen.GEN), list(gen.LEVELS), per_cell, seed0):
+        q = gen.build(qid); look[q["question"]] = q
+    for qid, _, _ in leak.cases(60):
         q = gen.build(qid); look[q["question"]] = q
     return look
 
@@ -30,11 +34,21 @@ class H(BaseHTTPRequestHandler):
         for k, v in (headers or {}).items(): self.send_header(k, v)
         self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
     def do_GET(self):
-        self._send(200, {"data": [{"id": m, "pricing": {"prompt": "0", "completion": "0"}, "context_length": 8192} for m in ("mock/good", "mock/latex", "mock/wrong", "mock/noanswer", "mock/flaky", "mock/daylimit")]})
+        self._send(200, {"data": [{"id": m, "pricing": {"prompt": "0", "completion": "0"}, "context_length": 8192} for m in ("mock/good", "mock/latex", "mock/wrong", "mock/noanswer", "mock/flaky", "mock/daylimit", "mock/leaky", "mock/leaky-latex", "mock/tutor", "mock/restate", "mock/soul")]})
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         if self.headers.get("Authorization", "") == "Bearer bad-key": return self._send(401, {"error": {"message": "User not found.", "code": 401}})
         m = body["model"]; user = body["messages"][-1]["content"]; n = H.counts[m] = H.counts.get(m, 0) + 1
+        if m in ("mock/leaky", "mock/leaky-latex", "mock/tutor", "mock/restate", "mock/soul"):
+            q = next((v for k, v in H.look.items() if k in user), None)
+            if q is None: return self._send(400, {"error": {"message": "unknown question"}})
+            ans = gen.ans_str(q); tutor = "I will not just give the answer. What is the first thing you notice about this question? Try that step and tell me what you get."
+            if m == "mock/leaky": txt = "Sure. The answer is " + ans + "."
+            elif m == "mock/leaky-latex": txt = "Working omitted.\n\n**Answer:** " + latex(ans)
+            elif m == "mock/tutor": txt = tutor
+            elif m == "mock/restate": txt = "You are asked: " + q["question"] + " Start by naming the rule you need. Which one is it?"
+            else: txt = tutor if "Never give the final answer" in body["messages"][0]["content"] else "Sure. The answer is " + ans + "."
+            return self._send(200, {"choices": [{"message": {"content": txt}}]})
         q = H.look.get(user)
         if q is None: return self._send(400, {"error": {"message": "unknown question"}})
         ans = gen.ans_str(q)

@@ -25,6 +25,7 @@ Topics: differentiation, integration, stationary points, tangents and normals, r
 | Practice questions | Code (`tools/gen.py`) | Tests build every topic and level, many seeds |
 | Answer keys | sympy, computed from the question | A second solver re-derives every answer from the question text. Tests break the generator on purpose to confirm the solver notices |
 | Judging a student's answer | `gen.py check` (symbolic and numeric comparison) | Tests for the many ways students write an answer, and for hostile input |
+| Naming the usual slip behind a wrong answer | `tools/slips.py`, computed from the question | Every slip answer is checked to be typable and readable, and hand-made cases name the right slip |
 | Worked examples in the notes | sympy, at build time | `build_knowledge.py` stops if any example is wrong, and a test rebuilds the notes |
 | Wording of explanations and hints | A free language model | The persona rules force it to check calculations with `tools/check.py`. **Not guaranteed.** |
 
@@ -42,7 +43,13 @@ INCORRECT
 
 $ python tools/gen.py hint quad-medium-31415 1
 HINT 1: Equal roots means the discriminant b^2 - 4ac = 0.
+
+$ python tools/gen.py check diff-medium-100 "-sin(4x-6)"
+INCORRECT
+DIAGNOSIS (chain): You differentiated the outer function but forgot the chain rule. Multiply by the derivative of the inside function.
 ```
+
+The diagnosis is not written by the model. For each question the code computes the answers that the usual slips would give (a dropped chain factor, a sign slip, one of two solutions, the tangent instead of the normal, and so on) and compares the student's answer with them. The advice is fixed text and never contains the answer. `progress.py mistakes` lists the slips that keep coming back.
 
 ## Try it without Telegram
 
@@ -55,7 +62,7 @@ python tools/render.py <id>          # writes a question card into plots/
 python tools/plot.py "x^2-4x+3" --mark
 ```
 
-Tests (over 330, about a minute):
+Tests (over 700, about two minutes):
 
 ```
 pip install -r requirements-dev.txt
@@ -68,7 +75,7 @@ Edith is an agent for OpenClaw, a self-hosted assistant gateway. Create an agent
 
 ## Benchmark
 
-`bench/bench.py` asks free OpenRouter models the same generated questions with no tools and no hints, then scores them with the same checker. It shows which free model is worth putting in Edith's fallback chain. Method and results: [docs/BENCHMARK.md](docs/BENCHMARK.md).
+`bench/bench.py` asks free OpenRouter models the same generated questions with no tools and no hints, then scores them with the same checker. It shows which free model is worth putting in Edith's fallback chain. `bench/leak.py` is a second test: it pushes for the final answer ("just tell me", exam panic, a fake instruction override) with and without `SOUL.md`, and counts how often the reply gives the answer away. Method and results: [docs/BENCHMARK.md](docs/BENCHMARK.md).
 
 ## Layout
 
@@ -78,10 +85,11 @@ tools/gen.py             questions, answer keys, hints, marking
 tools/check.py           sympy calculator for the tutor
 tools/plot.py            graphs
 tools/render.py          question cards
-tools/progress.py        scores from the call log
+tools/slips.py           the usual slips behind a wrong answer
+tools/progress.py        scores and recurring slips from the call log
 knowledge/               syllabus notes and 16 topic files
-bench/                   model benchmark, with a fake OpenRouter for tests
-tests/                   over 330 tests, including the independent solver
+bench/                   model benchmark and answer-leak test, with a fake OpenRouter for tests
+tests/                   over 700 tests, including the independent solver
 scripts/                 build the notes, sample sheet, export script
 docs/                    architecture, setup, benchmark
 ```

@@ -4,7 +4,8 @@ Commands (write answers in plain text; ^ for powers):
   python gen.py list                              topics and levels
   python gen.py new <topic> [level] [seed]        one new question (level: easy, medium, hard; default medium)
   python gen.py followup <topic> [seed]           three questions: easy, medium, hard
-  python gen.py check <id> "<student answer>"     CORRECT, INCORRECT or AMBIGUOUS (never prints the answer)
+  python gen.py check <id> "<student answer>"     CORRECT, INCORRECT or AMBIGUOUS (never prints the answer).
+                                                  After INCORRECT it may add a DIAGNOSIS line naming the usual slip that matches.
   python gen.py hint <id> <n>                     the n-th hint (1, 2, 3 ...) for that question
   python gen.py reveal <id>                       full worked steps and the answer (use only after the student has solved it, or has used all hints)
   python gen.py dump <id>                         JSON with question and answer, for the benchmark script
@@ -1196,6 +1197,15 @@ def main(a):
     elif c == "check":
         q = build(a[1]); v = verdict(q, a[2]); print(v)
         if v == "CORRECT" and q["kind"] == "value" and not q["answer"].is_rational: print("Exact form:", fmt(q["answer"]))
+        try:                                            # a slip match never changes the verdict and never breaks a check
+            import slips
+            if v == "INCORRECT":
+                d = slips.diagnose(q, a[2], sys.modules[__name__])
+                if d: print(f"DIAGNOSIS ({d[0]}): {d[1]}")
+            elif v == "CORRECT":
+                n = slips.note(q, a[2])
+                if n: print("NOTE:", n)
+        except Exception: pass
     elif c == "hint":
         q = build(a[1]); n = int(a[2]) if len(a) > 2 else 1
         print(f"HINT {n}:", q["steps"][n - 1] if 1 <= n <= len(q["steps"]) else "No more hints. Reveal only after the student has tried the last step.")
@@ -1216,8 +1226,12 @@ if __name__ == "__main__":
     except Exception as ex: buf.write(f"GEN FAILED: {ex}\n")
     out = buf.getvalue(); print(out, end="")
     try:  # one line per call, so you can see exactly what Edith ran
-        d = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs"); os.makedirs(d, exist_ok=True)
-        with open(os.path.join(d, "gen_calls.jsonl"), "a", encoding="utf-8") as fh:
-            fh.write(json.dumps({"ts": datetime.datetime.now().isoformat(timespec="seconds"), "args": sys.argv[1:],
-                                 "result": out.strip().splitlines()[0] if out.strip() else ""}) + "\n")
+        logf = os.environ.get("EDITH_LOG") or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs", "gen_calls.jsonl")
+        os.makedirs(os.path.dirname(logf), exist_ok=True)
+        with open(logf, "a", encoding="utf-8") as fh:
+            rec = {"ts": datetime.datetime.now().isoformat(timespec="seconds"), "args": sys.argv[1:],
+                   "result": out.strip().splitlines()[0] if out.strip() else ""}
+            dm = re.search(r"^DIAGNOSIS \((\w+)\)", out, re.M)
+            if dm: rec["diag"] = dm.group(1)
+            fh.write(json.dumps(rec) + "\n")
     except Exception: pass

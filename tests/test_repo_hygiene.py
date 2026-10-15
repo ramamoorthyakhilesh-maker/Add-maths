@@ -69,5 +69,5 @@ def test_gitignore_covers_private_output():
     p = os.path.join(ROOT, ".gitignore")
     assert os.path.exists(p), "add a .gitignore"
     g = read(p)
-    for entry in ("logs/", "plots/", "bench/results.jsonl", ".env", "__pycache__/"):
+    for entry in ("logs/", "plots/", "bench/results", "bench/leak", ".env", "__pycache__/"):
         assert entry in g, entry

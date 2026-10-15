@@ -23,6 +23,7 @@ COPY_FILES = [
     ("requirements-dev.txt", "requirements-dev.txt"),
     (".github/workflows/ci.yml", ".github/workflows/ci.yml"),
     ("bench/bench.py", "bench/bench.py"),
+    ("bench/leak.py", "bench/leak.py"),
     ("bench/mock_server.py", "bench/mock_server.py"),
     ("bench/models.example.txt", "bench/models.example.txt"),
 ]
@@ -45,7 +46,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("dest")
     ap.add_argument("--repo", help="OWNER/REPO, used in the README badge and clone links")
-    ap.add_argument("--with-report", action="store_true", help="also publish bench/REPORT.md as docs/BENCHMARK_RESULTS.md")
+    ap.add_argument("--with-report", action="store_true", help="also publish bench/REPORT.md as docs/BENCHMARK_RESULTS.md and bench/LEAK.md as docs/LEAK_RESULTS.md")
     a = ap.parse_args()
     dest = os.path.abspath(a.dest)
     if os.path.abspath(ROOT) == dest or dest.startswith(os.path.abspath(ROOT) + os.sep):
@@ -74,6 +75,11 @@ def main():
             copy_file(rep, os.path.join(dest, "docs", "BENCHMARK_RESULTS.md")); n += 1
         else:
             print("No bench/REPORT.md with content yet, so no results were published.")
+        leak = os.path.join(ROOT, "bench", "LEAK.md")
+        if os.path.exists(leak) and os.path.getsize(leak) > 0:
+            copy_file(leak, os.path.join(dest, "docs", "LEAK_RESULTS.md")); n += 1
+        else:
+            print("No bench/LEAK.md with content yet, so no leak results were published.")
     if a.repo:
         for rel in ("README.md", os.path.join("docs", "SETUP.md")):
             p = os.path.join(dest, rel)
