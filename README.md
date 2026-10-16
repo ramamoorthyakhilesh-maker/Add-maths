@@ -75,9 +75,9 @@ Edith is an agent for OpenClaw, a self-hosted assistant gateway. Create an agent
 
 ## Benchmark
 
-`bench/bench.py` asks free OpenRouter models the same generated questions with no tools and no hints, then scores them with the same checker. It shows which free model is worth putting in Edith's fallback chain. `bench/leak.py` is a second test: it pushes for the final answer ("just tell me", exam panic, a fake instruction override) with and without `SOUL.md`, and counts how often the reply gives the answer away. Method: [docs/BENCHMARK.md](docs/BENCHMARK.md).
+`bench/bench.py` asks free models (through any OpenAI-compatible provider, such as OpenRouter or UnoRouter) the same generated questions with no tools and no hints, then scores them with the same checker. It shows which free model is worth putting in Edith's fallback chain. `bench/leak.py` is a second test: it pushes for the final answer ("just tell me", exam panic, a fake instruction override) with and without `SOUL.md`, and counts how often the reply gives the answer away. Method: [docs/BENCHMARK.md](docs/BENCHMARK.md).
 
-Results from October 2026, three free models (agnes-3.0-flash, deepseek-v4.1-flash, k2-horizon):
+Results from October 2026, three free models served through UnoRouter (agnes-3.0-flash, deepseek-v4.1-flash, k2-horizon):
 
 | Test | Result |
 |---|---|
@@ -109,7 +109,7 @@ docs/                    architecture, setup, benchmark
 
 - Not affiliated with or endorsed by Cambridge University Press & Assessment. The notes are original study notes, not Cambridge text, and the generator does not copy past papers.
 - The formula list and the "not in the syllabus" list in `knowledge/syllabus.md` were written from the 2025 to 2027 syllabus and should be checked against the current official PDF.
-- Free models are slow and rate limited (OpenRouter free tier: 20 requests a minute, 50 a day unless credits have been bought).
+- Free models are slow and rate limited (for example the OpenRouter free tier allows 20 requests a minute and 50 a day unless credits have been bought, and UnoRouter has a daily cap as well).
 - No marking of photographed working yet. Answers are typed.
 
 ## Licence
