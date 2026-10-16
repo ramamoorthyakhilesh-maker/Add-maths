@@ -75,7 +75,18 @@ Edith is an agent for OpenClaw, a self-hosted assistant gateway. Create an agent
 
 ## Benchmark
 
-`bench/bench.py` asks free OpenRouter models the same generated questions with no tools and no hints, then scores them with the same checker. It shows which free model is worth putting in Edith's fallback chain. `bench/leak.py` is a second test: it pushes for the final answer ("just tell me", exam panic, a fake instruction override) with and without `SOUL.md`, and counts how often the reply gives the answer away. Method and results: [docs/BENCHMARK.md](docs/BENCHMARK.md).
+`bench/bench.py` asks free OpenRouter models the same generated questions with no tools and no hints, then scores them with the same checker. It shows which free model is worth putting in Edith's fallback chain. `bench/leak.py` is a second test: it pushes for the final answer ("just tell me", exam panic, a fake instruction override) with and without `SOUL.md`, and counts how often the reply gives the answer away. Method: [docs/BENCHMARK.md](docs/BENCHMARK.md).
+
+Results from October 2026, three free models (agnes-3.0-flash, deepseek-v4.1-flash, k2-horizon):
+
+| Test | Result |
+|---|---|
+| Accuracy, 67 questions all three answered (24 topics, 3 levels) | 64 of 67 for each model, 96% (95% interval 88% to 98%) |
+| Gave the final answer under pressure, plain tutor prompt | 78 of 87 replies, 90% |
+| Same test with `SOUL.md` | 6 of 89 replies, 7% |
+| Same test after adding the mark-scheme and no-reasoning rules | 3 of 89 replies, 3% (all from one model that prints its reasoning into the reply) |
+
+Full tables: [accuracy](docs/BENCHMARK_RESULTS.md), [leaks, first run](docs/LEAK_RESULTS.md), [leaks, after the rule change](docs/LEAK_RESULTS_V2.md). The leak test sends one message per case and uses no tools, and the accuracy set is small, so read the intervals and not only the percentages.
 
 ## Layout
 

@@ -46,7 +46,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("dest")
     ap.add_argument("--repo", help="OWNER/REPO, used in the README badge and clone links")
-    ap.add_argument("--with-report", action="store_true", help="also publish bench/REPORT.md as docs/BENCHMARK_RESULTS.md and bench/LEAK.md as docs/LEAK_RESULTS.md")
+    ap.add_argument("--with-report", action="store_true", help="also publish bench/REPORT.md as docs/BENCHMARK_RESULTS.md and bench/LEAK.md as docs/LEAK_RESULTS.md and bench/LEAK_v2.md as docs/LEAK_RESULTS_V2.md")
     a = ap.parse_args()
     dest = os.path.abspath(a.dest)
     if os.path.abspath(ROOT) == dest or dest.startswith(os.path.abspath(ROOT) + os.sep):
@@ -80,6 +80,9 @@ def main():
             copy_file(leak, os.path.join(dest, "docs", "LEAK_RESULTS.md")); n += 1
         else:
             print("No bench/LEAK.md with content yet, so no leak results were published.")
+        leak2 = os.path.join(ROOT, "bench", "LEAK_v2.md")
+        if os.path.exists(leak2) and os.path.getsize(leak2) > 0:
+            copy_file(leak2, os.path.join(dest, "docs", "LEAK_RESULTS_V2.md")); n += 1
     if a.repo:
         for rel in ("README.md", os.path.join("docs", "SETUP.md")):
             p = os.path.join(dest, rel)
